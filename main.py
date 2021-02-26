@@ -49,16 +49,19 @@ for idx in tqdm(range(len(sample_list))):
     image = imageio.imread(sample['ref_img_fi'])
 
     print(f"Running depth extraction at {time.time()}")
+    image_width = image.shape[1]
+    #target_w = min(image_width, config["longer_side_len"])
     if config['require_midas'] is True:
         run_depth([sample['ref_img_fi']], config['src_folder'], config['depth_folder'],
-                  config['MiDaS_model_ckpt'], MonoDepthNet, MiDaS_utils, target_w=640)
+                  config['MiDaS_model_ckpt'], MonoDepthNet, MiDaS_utils, target_w=image_width)
     if 'npy' in config['depth_format']:
         config['output_h'], config['output_w'] = np.load(sample['depth_fi']).shape[:2]
     else:
         config['output_h'], config['output_w'] = imageio.imread(sample['depth_fi']).shape[:2]
     frac = config['longer_side_len'] / max(config['output_h'], config['output_w'])
-    config['output_h'], config['output_w'] = int(config['output_h'] * frac), int(config['output_w'] * frac)
+    #frac = 1
     config['original_h'], config['original_w'] = config['output_h'], config['output_w']
+    config['output_h'], config['output_w'] = int(config['output_h'] * frac), int(config['output_w'] * frac)
     if image.ndim == 2:
         image = image[..., None].repeat(3, -1)
     if np.sum(np.abs(image[..., 0] - image[..., 1])) == 0 and np.sum(np.abs(image[..., 1] - image[..., 2])) == 0:
